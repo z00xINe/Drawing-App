@@ -14,8 +14,14 @@
 
 using namespace std;
 
-// ===============================================================
-// 2 - Custom Mouse Cursor
+struct Shape {
+    string type;
+    int x1, y1, x2, y2;
+    COLORREF color;
+};
+
+vector<Shape> shapes;
+
 void DrawCustomCursor(HDC hdc, int x, int y, COLORREF color = RGB(255, 0, 0)) {
     HPEN pen = CreatePen(PS_SOLID, 1, color);
     HGDIOBJ oldPen = SelectObject(hdc, pen);
@@ -29,8 +35,6 @@ void DrawCustomCursor(HDC hdc, int x, int y, COLORREF color = RGB(255, 0, 0)) {
     DeleteObject(pen);
 }
 
-// ===============================================================
-// 7 - Fill Quarter with Circles
 void FillQuarterWithCircles(HDC hdc, int cx, int cy, int R, int quarter, COLORREF color = RGB(0, 0, 255)) {
     int smallR = 10;
     HPEN pen = CreatePen(PS_SOLID, 1, color);
@@ -51,6 +55,7 @@ void FillQuarterWithCircles(HDC hdc, int cx, int cy, int R, int quarter, COLORRE
                 }
                 if (inQuarter) {
                     Ellipse(hdc, x - smallR, y - smallR, x + smallR, y + smallR);
+                    shapes.push_back({"circle", x - smallR, y - smallR, x + smallR, y + smallR, color});
                 }
             }
         }
@@ -59,16 +64,6 @@ void FillQuarterWithCircles(HDC hdc, int cx, int cy, int R, int quarter, COLORRE
     DeleteObject(pen);
     DeleteObject(brush);
 }
-
-// ===============================================================
-// 12 - Save Shapes to File
-struct Shape {
-    string type;
-    int x1, y1, x2, y2;
-    COLORREF color;
-};
-
-vector<Shape> shapes;
 
 void SaveShapesToFile(const string& filename) {
     ofstream out(filename);
@@ -82,18 +77,17 @@ void SaveShapesToFile(const string& filename) {
     out.close();
 }
 
-// ===============================================================
 #define ID_CLEAR_SCREEN 1
 #define ID_SET_WHITE_BG 6
 #define ID_SAVE_SHAPES 7
 #define ID_FILL_QUARTER 8
 
 int mouseX = 0, mouseY = 0;
-
+bool pointSet = false;
+int currentQuarter = 1;
 
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 TCHAR szClassName[] = _T("2D Drawing App");
-
 HBRUSH backgroundBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 
 HMENU CreateMainMenu() {
@@ -143,12 +137,8 @@ int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance,
     return messages.wParam;
 }
 
-bool pointSet = false;
-int currentQuarter = 1;
-
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     static POINT pts[] = {{100, 100}, {150, 80}, {200, 120}, {250, 90}, {300, 150}};
-    static int mouseX = 0, mouseY = 0;
 
     PAINTSTRUCT p;
 
@@ -163,12 +153,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             BeginPaint(hwnd, &p);
             if (pointSet) {
                 DrawCardinalSpline(p.hdc, pts, 5);
-                FillQuarterWithCircles(p.hdc, 250, 250, 100, 1);
+                FillQuarterWithCircles(p.hdc, 250, 250, 100, currentQuarter);
             }
             DrawCustomCursor(p.hdc, mouseX, mouseY);
             EndPaint(hwnd, &p);
             break;
-
 
         case WM_LBUTTONDOWN:
             pointSet = true;
@@ -179,6 +168,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             switch (LOWORD(wParam)) {
                 case ID_CLEAR_SCREEN:
                     pointSet = false;
+                    shapes.clear();
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
 
@@ -190,10 +180,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
                 case ID_SAVE_SHAPES:
                     SaveShapesToFile("shapes.txt");
+                    MessageBox(hwnd, _T("Shapes saved to shapes.txt"), _T("Saved"), MB_OK);
                     break;
 
                 case ID_FILL_QUARTER:
-                    currentQuarter = (currentQuarter % 4) + 1; // cycle through quarters
+                    currentQuarter = (currentQuarter % 4) + 1;
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
             }
