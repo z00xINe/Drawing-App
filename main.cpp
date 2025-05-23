@@ -88,6 +88,9 @@ void SaveShapesToFile(const string& filename) {
 #define ID_SAVE_SHAPES 7
 #define ID_FILL_QUARTER 8
 
+int mouseX = 0, mouseY = 0;
+
+
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 TCHAR szClassName[] = _T("2D Drawing App");
 
@@ -153,18 +156,19 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         case WM_MOUSEMOVE:
             mouseX = LOWORD(lParam);
             mouseY = HIWORD(lParam);
-            InvalidateRect(hwnd, NULL, FALSE);
+            InvalidateRect(hwnd, NULL, TRUE);
             break;
 
         case WM_PAINT:
             BeginPaint(hwnd, &p);
-            DrawCustomCursor(p.hdc, mouseX, mouseY);
             if (pointSet) {
                 DrawCardinalSpline(p.hdc, pts, 5);
-                FillQuarterWithCircles(p.hdc, 300, 200, 100, currentQuarter);
+                FillQuarterWithCircles(p.hdc, 250, 250, 100, 1);
             }
+            DrawCustomCursor(p.hdc, mouseX, mouseY);
             EndPaint(hwnd, &p);
             break;
+
 
         case WM_LBUTTONDOWN:
             pointSet = true;
