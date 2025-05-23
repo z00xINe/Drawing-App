@@ -100,7 +100,7 @@ void SaveShapesToFile(const string& filename) {
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 TCHAR szClassName[] = _T("2D Drawing App");
 
-HBRUSH backgroundBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+HBRUSH backgroundBrush = (HBRUSH) GetStockObject(WHITE_BRUSH);
 
 HMENU CreateMainMenu() {
     HMENU hMenu = CreateMenu();
@@ -131,7 +131,7 @@ int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszA
     wincl.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
     wincl.hCursor = LoadCursor(NULL, IDC_ARROW);
     wincl.lpszMenuName = NULL;
-    wincl.hbrBackground = backgroundBrush;
+    wincl.hbrBackground = (HBRUSH) COLOR_BACKGROUND;
 
     if (!RegisterClassEx(&wincl)) return 0;
 
