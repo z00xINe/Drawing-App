@@ -14,6 +14,8 @@
 
 using namespace std;
 
+// ===============================================================
+// Data Structures and Global Variables
 struct Shape {
     string type;
     int x1, y1, x2, y2;
@@ -21,7 +23,15 @@ struct Shape {
 };
 
 vector<Shape> shapes;
+bool showCursor = false;
+bool drawSpline = false;
+bool fillQuarter = false;
+int currentQuarter = 1;
 
+int mouseX = 0, mouseY = 0;
+
+// ===============================================================
+// Function Definitions
 void DrawCustomCursor(HDC hdc, int x, int y, COLORREF color = RGB(255, 0, 0)) {
     HPEN pen = CreatePen(PS_SOLID, 1, color);
     HGDIOBJ oldPen = SelectObject(hdc, pen);
@@ -55,7 +65,7 @@ void FillQuarterWithCircles(HDC hdc, int cx, int cy, int R, int quarter, COLORRE
                 }
                 if (inQuarter) {
                     Ellipse(hdc, x - smallR, y - smallR, x + smallR, y + smallR);
-                    shapes.push_back({"circle", x - smallR, y - smallR, x + smallR, y + smallR, color});
+                    shapes.push_back({"Circle", x - smallR, y - smallR, x + smallR, y + smallR, color});
                 }
             }
         }
@@ -75,19 +85,21 @@ void SaveShapesToFile(const string& filename) {
     }
 
     out.close();
+    MessageBox(NULL, _T("Shapes saved to shapes."), _T("Save"), MB_OK);
 }
 
-#define ID_CLEAR_SCREEN 1
-#define ID_SET_WHITE_BG 6
-#define ID_SAVE_SHAPES 7
-#define ID_FILL_QUARTER 8
-
-int mouseX = 0, mouseY = 0;
-bool pointSet = false;
-int currentQuarter = 1;
+// ===============================================================
+// GUI Definitions
+#define ID_CLEAR_SCREEN   1
+#define ID_SET_WHITE_BG   2
+#define ID_SAVE_SHAPES    3
+#define ID_DRAW_CURSOR    4
+#define ID_DRAW_SPLINE    5
+#define ID_FILL_QUARTER   6
 
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 TCHAR szClassName[] = _T("2D Drawing App");
+
 HBRUSH backgroundBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 
 HMENU CreateMainMenu() {
@@ -97,14 +109,15 @@ HMENU CreateMainMenu() {
     AppendMenu(hSubMenu, MF_STRING, ID_SET_WHITE_BG, _T("Change background to white"));
     AppendMenu(hSubMenu, MF_STRING, ID_CLEAR_SCREEN, _T("Clear screen"));
     AppendMenu(hSubMenu, MF_STRING, ID_SAVE_SHAPES, _T("Save shapes to file"));
-    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER, _T("Fill Quarter with Circles"));
+    AppendMenu(hSubMenu, MF_STRING, ID_DRAW_CURSOR, _T("Draw Custom Cursor"));
+    AppendMenu(hSubMenu, MF_STRING, ID_DRAW_SPLINE, _T("Draw Cardinal Spline"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER, _T("Fill Circle Quarter with Circles"));
 
     AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hSubMenu, _T("Options"));
     return hMenu;
 }
 
-int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance,
-                   LPSTR lpszArgument, int nCmdShow) {
+int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszArgument, int nCmdShow) {
     HWND hwnd;
     MSG messages;
     WNDCLASSEX wincl = {0};
@@ -140,8 +153,6 @@ int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance,
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     static POINT pts[] = {{100, 100}, {150, 80}, {200, 120}, {250, 90}, {300, 150}};
 
-    PAINTSTRUCT p;
-
     switch (message) {
         case WM_MOUSEMOVE:
             mouseX = LOWORD(lParam);
@@ -150,25 +161,25 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             break;
 
         case WM_PAINT:
-            BeginPaint(hwnd, &p);
-            if (pointSet) {
-                DrawCardinalSpline(p.hdc, pts, 5);
-                FillQuarterWithCircles(p.hdc, 250, 250, 100, currentQuarter);
-            }
-            DrawCustomCursor(p.hdc, mouseX, mouseY);
-            EndPaint(hwnd, &p);
-            break;
+        {
+            PAINTSTRUCT p;
+            HDC hdc = BeginPaint(hwnd, &p);
 
-        case WM_LBUTTONDOWN:
-            pointSet = true;
-            InvalidateRect(hwnd, NULL, TRUE);
+            if (showCursor) DrawCustomCursor(hdc, mouseX, mouseY);
+            if (drawSpline) DrawCardinalSpline(hdc, pts, 5);
+            if (fillQuarter) FillQuarterWithCircles(hdc, 250, 250, 100, currentQuarter);
+
+            EndPaint(hwnd, &p);
+        }
             break;
 
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
                 case ID_CLEAR_SCREEN:
-                    pointSet = false;
                     shapes.clear();
+                    showCursor = false;
+                    drawSpline = false;
+                    fillQuarter = false;
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
 
@@ -180,11 +191,21 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
                 case ID_SAVE_SHAPES:
                     SaveShapesToFile("shapes.txt");
-                    MessageBox(hwnd, _T("Shapes saved to shapes.txt"), _T("Saved"), MB_OK);
+                    break;
+
+                case ID_DRAW_CURSOR:
+                    showCursor = !showCursor;
+                    InvalidateRect(hwnd, NULL, TRUE);
+                    break;
+
+                case ID_DRAW_SPLINE:
+                    drawSpline = !drawSpline;
+                    InvalidateRect(hwnd, NULL, TRUE);
                     break;
 
                 case ID_FILL_QUARTER:
                     currentQuarter = (currentQuarter % 4) + 1;
+                    fillQuarter = true;
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
             }
