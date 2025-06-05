@@ -17,6 +17,33 @@ CMakeFiles/Project.dir/main.cpp.obj: C:/Users/moustafa/Drawing-App/main.cpp \
   C:/MinGW/include/direct.h \
   C:/MinGW/include/dlgs.h \
   C:/MinGW/include/errno.h \
+  C:/MinGW/include/gdiplus.h \
+  C:/MinGW/include/gdiplus/gdiplus.h \
+  C:/MinGW/include/gdiplus/gdiplusbase.h \
+  C:/MinGW/include/gdiplus/gdiplusbrush.h \
+  C:/MinGW/include/gdiplus/gdipluscolor.h \
+  C:/MinGW/include/gdiplus/gdipluscolormatrix.h \
+  C:/MinGW/include/gdiplus/gdipluseffects.h \
+  C:/MinGW/include/gdiplus/gdiplusenums.h \
+  C:/MinGW/include/gdiplus/gdiplusflat.h \
+  C:/MinGW/include/gdiplus/gdiplusgpstubs.h \
+  C:/MinGW/include/gdiplus/gdiplusgraphics.h \
+  C:/MinGW/include/gdiplus/gdiplusheaders.h \
+  C:/MinGW/include/gdiplus/gdiplusimageattributes.h \
+  C:/MinGW/include/gdiplus/gdiplusimagecodec.h \
+  C:/MinGW/include/gdiplus/gdiplusimaging.h \
+  C:/MinGW/include/gdiplus/gdiplusimpl.h \
+  C:/MinGW/include/gdiplus/gdiplusinit.h \
+  C:/MinGW/include/gdiplus/gdipluslinecaps.h \
+  C:/MinGW/include/gdiplus/gdiplusmatrix.h \
+  C:/MinGW/include/gdiplus/gdiplusmem.h \
+  C:/MinGW/include/gdiplus/gdiplusmetafile.h \
+  C:/MinGW/include/gdiplus/gdiplusmetaheader.h \
+  C:/MinGW/include/gdiplus/gdipluspath.h \
+  C:/MinGW/include/gdiplus/gdipluspen.h \
+  C:/MinGW/include/gdiplus/gdipluspixelformats.h \
+  C:/MinGW/include/gdiplus/gdiplusstringformat.h \
+  C:/MinGW/include/gdiplus/gdiplustypes.h \
   C:/MinGW/include/imm.h \
   C:/MinGW/include/io.h \
   C:/MinGW/include/locale.h \
@@ -154,6 +181,7 @@ CMakeFiles/Project.dir/main.cpp.obj: C:/Users/moustafa/Drawing-App/main.cpp \
   C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/ios \
   C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/iosfwd \
   C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/istream \
+  C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/math.h \
   C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/atomic_word.h \
   C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/basic_file.h \
   C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/c++allocator.h \
@@ -181,37 +209,21 @@ CMakeFiles/Project.dir/main.cpp.obj: C:/Users/moustafa/Drawing-App/main.cpp \
   C:/MinGW/lib/gcc/mingw32/6.3.0/include/stdint.h
 
 
-C:/MinGW/include/winspool.h:
-
-C:/MinGW/include/rpc.h:
-
 C:/MinGW/include/_mingw.h:
 
 C:/Users/moustafa/Drawing-App/main.cpp:
-
-C:/MinGW/include/rpcnsi.h:
 
 C:/Users/moustafa/Drawing-App/draw.h:
 
 C:/MinGW/include/_winsock.h:
 
-C:/MinGW/include/stdint.h:
-
 C:/MinGW/include/objfwd.h:
 
 C:/MinGW/include/basetsd.h:
 
-C:/MinGW/include/sys/time.h:
-
-C:/MinGW/include/stdio.h:
-
 C:/MinGW/include/oleauto.h:
 
 C:/MinGW/include/basetyps.h:
-
-C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/functexcept.h:
-
-C:/MinGW/include/rpcnterr.h:
 
 C:/MinGW/include/cderr.h:
 
@@ -223,13 +235,17 @@ C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/basic_ios.h:
 
 C:/MinGW/include/commdlg.h:
 
+C:/MinGW/include/gdiplus/gdiplusimpl.h:
+
 C:/MinGW/include/ctype.h:
+
+C:/MinGW/include/gdiplus/gdiplusimaging.h:
 
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/stl_construct.h:
 
-C:/MinGW/include/io.h:
-
 C:/MinGW/include/sys/bsdtypes.h:
+
+C:/MinGW/include/io.h:
 
 C:/MinGW/include/winsock.h:
 
@@ -238,8 +254,6 @@ C:/MinGW/include/dbt.h:
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/stl_iterator_base_types.h:
 
 C:/MinGW/include/dde.h:
-
-C:/MinGW/include/sdkddkver.h:
 
 C:/MinGW/include/ddeml.h:
 
@@ -257,57 +271,109 @@ C:/MinGW/include/dlgs.h:
 
 C:/MinGW/include/locale.h:
 
-C:/MinGW/include/wctype.h:
-
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/cpu_defines.h:
 
 C:/MinGW/include/errno.h:
 
+C:/MinGW/include/gdiplus.h:
+
+C:/MinGW/include/prsht.h:
+
+C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/cerrno:
+
+C:/MinGW/include/gdiplus/gdiplusbrush.h:
+
+C:/MinGW/include/gdiplus/gdiplus.h:
+
+C:/MinGW/include/gdiplus/gdiplusmatrix.h:
+
+C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/c++io.h:
+
+C:/MinGW/include/gdiplus/gdiplusbase.h:
+
+C:/MinGW/include/gdiplus/gdipluscolor.h:
+
+C:/MinGW/include/gdiplus/gdipluscolormatrix.h:
+
 C:/MinGW/include/nspapi.h:
+
+C:/MinGW/include/gdiplus/gdiplusstringformat.h:
 
 C:/MinGW/include/nb30.h:
 
+C:/MinGW/include/gdiplus/gdipluseffects.h:
+
 C:/MinGW/include/imm.h:
 
-C:/MinGW/include/lzexpand.h:
-
-C:/MinGW/include/unknwn.h:
-
-C:/MinGW/include/mmsystem.h:
-
-C:/MinGW/include/msvcrtver.h:
-
-C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/stl_pair.h:
-
-C:/MinGW/include/time.h:
-
-C:/MinGW/include/oaidl.h:
-
-C:/MinGW/include/objidl.h:
-
-C:/MinGW/include/ole2.h:
-
-C:/MinGW/include/strings.h:
-
-C:/MinGW/include/olectlid.h:
-
-C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/ctype_base.h:
-
-C:/MinGW/include/poppack.h:
-
-C:/MinGW/include/w32api.h:
+C:/MinGW/include/process.h:
 
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/c++allocator.h:
 
 C:/MinGW/include/wchar.h:
 
-C:/MinGW/include/process.h:
+C:/MinGW/include/gdiplus/gdiplusenums.h:
 
-C:/MinGW/include/prsht.h:
+C:/MinGW/include/gdiplus/gdiplusflat.h:
+
+C:/MinGW/include/gdiplus/gdiplusimageattributes.h:
+
+C:/MinGW/include/gdiplus/gdiplusgpstubs.h:
+
+C:/MinGW/include/gdiplus/gdiplusgraphics.h:
+
+C:/MinGW/include/gdiplus/gdiplusheaders.h:
+
+C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/localefwd.h:
+
+C:/MinGW/include/gdiplus/gdiplusmem.h:
+
+C:/MinGW/include/gdiplus/gdiplusimagecodec.h:
+
+C:/MinGW/include/gdiplus/gdiplusinit.h:
+
+C:/MinGW/include/gdiplus/gdipluslinecaps.h:
+
+C:/MinGW/include/gdiplus/gdipluspath.h:
+
+C:/MinGW/include/gdiplus/gdiplusmetafile.h:
+
+C:/MinGW/include/gdiplus/gdiplusmetaheader.h:
+
+C:/MinGW/include/gdiplus/gdipluspen.h:
+
+C:/MinGW/include/gdiplus/gdipluspixelformats.h:
+
+C:/MinGW/include/objidl.h:
+
+C:/MinGW/include/gdiplus/gdiplustypes.h:
+
+C:/MinGW/include/lzexpand.h:
+
+C:/MinGW/include/mmsystem.h:
+
+C:/MinGW/include/msvcrtver.h:
+
+C:/MinGW/include/oaidl.h:
+
+C:/MinGW/include/strings.h:
+
+C:/MinGW/include/ole2.h:
+
+C:/MinGW/include/olectlid.h:
+
+C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/ctype_base.h:
+
+C:/MinGW/include/w32api.h:
+
+C:/MinGW/include/poppack.h:
 
 C:/MinGW/include/pshpack2.h:
 
 C:/MinGW/include/pshpack4.h:
+
+C:/MinGW/include/winspool.h:
+
+C:/MinGW/include/rpc.h:
 
 C:/MinGW/include/rpcdce.h:
 
@@ -315,11 +381,21 @@ C:/MinGW/include/rpcdcep.h:
 
 C:/MinGW/include/rpcndr.h:
 
+C:/MinGW/include/rpcnsi.h:
+
 C:/MinGW/include/rpcnsip.h:
 
-C:/MinGW/include/tchar.h:
+C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/functexcept.h:
+
+C:/MinGW/include/rpcnterr.h:
+
+C:/MinGW/include/sdkddkver.h:
 
 C:/MinGW/include/shellapi.h:
+
+C:/MinGW/include/stdint.h:
+
+C:/MinGW/include/stdio.h:
 
 C:/MinGW/include/stdlib.h:
 
@@ -328,6 +404,18 @@ C:/MinGW/include/string.h:
 C:/MinGW/include/sys/stat.h:
 
 C:/MinGW/include/sys/types.h:
+
+C:/MinGW/include/sys/time.h:
+
+C:/MinGW/include/tchar.h:
+
+C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/stl_pair.h:
+
+C:/MinGW/include/time.h:
+
+C:/MinGW/include/unknwn.h:
+
+C:/MinGW/include/wctype.h:
 
 C:/MinGW/include/winbase.h:
 
@@ -411,6 +499,8 @@ C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/hash_bytes.h:
 
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/istream.tcc:
 
+C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/math.h:
+
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/move.h:
 
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/locale_classes.h:
@@ -420,8 +510,6 @@ C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/locale_facets.h:
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/vector.tcc:
 
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/locale_facets.tcc:
-
-C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/localefwd.h:
 
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/memoryfwd.h:
 
@@ -462,8 +550,6 @@ C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/streambuf_iterator.h:
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/bits/stringfwd.h:
 
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/cctype:
-
-C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/cerrno:
 
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/clocale:
 
@@ -510,8 +596,6 @@ C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/atomic_word.h:
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/basic_file.h:
 
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/c++config.h:
-
-C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/c++io.h:
 
 C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/c++locale.h:
 

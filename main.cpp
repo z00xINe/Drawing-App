@@ -11,6 +11,10 @@
 #include <string>
 #include <fstream>
 #include "draw.h"
+#include <gdiplus.h>
+#pragma comment (lib, "gdiplus.lib")
+using namespace Gdiplus;
+
 
 using namespace std;
 
@@ -21,6 +25,28 @@ struct Shape {
     int x1, y1, x2, y2;
     COLORREF color;
 };
+int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
+    UINT  num = 0;
+    UINT  size = 0;
+    GetImageEncodersSize(&num, &size);
+    if (size == 0) return -1;
+
+    ImageCodecInfo* pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
+    if (!pImageCodecInfo) return -1;
+
+    GetImageEncoders(num, size, pImageCodecInfo);
+    for (UINT j = 0; j < num; ++j) {
+        if (wcscmp(pImageCodecInfo[j].MimeType, format) == 0) {
+            *pClsid = pImageCodecInfo[j].Clsid;
+            free(pImageCodecInfo);
+            return j;
+        }
+    }
+
+    free(pImageCodecInfo);
+    return -1;
+}
+
 
 vector<Shape> shapes;
 bool showCursor = false;
@@ -77,16 +103,40 @@ void FillQuarterWithCircles(HDC hdc, int cx, int cy, int R, int quarter, COLORRE
 }
 
 void SaveShapesToFile(const string& filename) {
-    ofstream out(filename);
-    if (!out.is_open()) return;
+    HWND hwnd = GetForegroundWindow();
+    RECT rc;
+    GetClientRect(hwnd, &rc);
 
-    for (const auto& shape : shapes) {
-        out << shape.type << " " << shape.x1 << " " << shape.y1 << " "
-            << shape.x2 << " " << shape.y2 << " " << shape.color << "\n";
-    }
+    int width = rc.right - rc.left;
+    int height = rc.bottom - rc.top;
 
-    out.close();
-    MessageBox(NULL, _T("Shapes saved to shapes."), _T("Save"), MB_OK);
+    HDC hdcWindow = GetDC(hwnd);
+    HDC hdcMemDC = CreateCompatibleDC(hdcWindow);
+    HBITMAP hBitmap = CreateCompatibleBitmap(hdcWindow, width, height);
+    SelectObject(hdcMemDC, hBitmap);
+
+    BitBlt(hdcMemDC, 0, 0, width, height, hdcWindow, 0, 0, SRCCOPY);
+
+
+    GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+    Bitmap bitmap(hBitmap, NULL);
+
+    CLSID pngClsid;
+    GetEncoderClsid(L"image/png", &pngClsid);
+
+    bitmap.Save(L"drawing.png", &pngClsid, NULL);
+
+    GdiplusShutdown(gdiplusToken);
+
+
+    DeleteObject(hBitmap);
+    DeleteDC(hdcMemDC);
+    ReleaseDC(hwnd, hdcWindow);
+
+    MessageBox(NULL, _T("Current drawing saved as 'drawing.png'"), _T("Saved"), MB_OK);
 }
 
 // ===============================================================

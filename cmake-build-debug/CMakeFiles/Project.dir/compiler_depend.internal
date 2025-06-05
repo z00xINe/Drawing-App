@@ -18,6 +18,33 @@ CMakeFiles/Project.dir/main.cpp.obj
  C:/MinGW/include/direct.h
  C:/MinGW/include/dlgs.h
  C:/MinGW/include/errno.h
+ C:/MinGW/include/gdiplus.h
+ C:/MinGW/include/gdiplus/gdiplus.h
+ C:/MinGW/include/gdiplus/gdiplusbase.h
+ C:/MinGW/include/gdiplus/gdiplusbrush.h
+ C:/MinGW/include/gdiplus/gdipluscolor.h
+ C:/MinGW/include/gdiplus/gdipluscolormatrix.h
+ C:/MinGW/include/gdiplus/gdipluseffects.h
+ C:/MinGW/include/gdiplus/gdiplusenums.h
+ C:/MinGW/include/gdiplus/gdiplusflat.h
+ C:/MinGW/include/gdiplus/gdiplusgpstubs.h
+ C:/MinGW/include/gdiplus/gdiplusgraphics.h
+ C:/MinGW/include/gdiplus/gdiplusheaders.h
+ C:/MinGW/include/gdiplus/gdiplusimageattributes.h
+ C:/MinGW/include/gdiplus/gdiplusimagecodec.h
+ C:/MinGW/include/gdiplus/gdiplusimaging.h
+ C:/MinGW/include/gdiplus/gdiplusimpl.h
+ C:/MinGW/include/gdiplus/gdiplusinit.h
+ C:/MinGW/include/gdiplus/gdipluslinecaps.h
+ C:/MinGW/include/gdiplus/gdiplusmatrix.h
+ C:/MinGW/include/gdiplus/gdiplusmem.h
+ C:/MinGW/include/gdiplus/gdiplusmetafile.h
+ C:/MinGW/include/gdiplus/gdiplusmetaheader.h
+ C:/MinGW/include/gdiplus/gdipluspath.h
+ C:/MinGW/include/gdiplus/gdipluspen.h
+ C:/MinGW/include/gdiplus/gdipluspixelformats.h
+ C:/MinGW/include/gdiplus/gdiplusstringformat.h
+ C:/MinGW/include/gdiplus/gdiplustypes.h
  C:/MinGW/include/imm.h
  C:/MinGW/include/io.h
  C:/MinGW/include/locale.h
@@ -155,6 +182,7 @@ CMakeFiles/Project.dir/main.cpp.obj
  C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/ios
  C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/iosfwd
  C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/istream
+ C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/math.h
  C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/atomic_word.h
  C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/basic_file.h
  C:/MinGW/lib/gcc/mingw32/6.3.0/include/c++/mingw32/bits/c++allocator.h
