@@ -12,7 +12,6 @@
 #include <fstream>
 #include "draw.h"
 #include <gdiplus.h>
-#include <sphelper.h>
 #pragma comment (lib, "gdiplus.lib")
 using namespace Gdiplus;
 
@@ -142,11 +141,10 @@ void SaveShapesToFile(const string& filename) {
 }
 
 enum CircleAlgorithm {
-    CIRCLE_DIRECT, CIRCLE_POLAR, CIRCLE_ITER_POLAR, CIRCLE_MIDPOINT, CIRCLE_MOD_MID
+    CIRCLE_DIRECT, CIRCLE_POLAR, CIRCLE_ITER_POLAR, CIRCLE_MIDPOINT, CIRCLE_MOD_MID, NUL
 };
 
-CircleAlgorithm currentCircleAlgorithm = CIRCLE_DIRECT;
-COLORREF currentColor = RGB(0, 0, 255);
+CircleAlgorithm currentCircleAlgorithm = NUL;
 
 void DrawPixel(HDC hdc, int x, int y, COLORREF color) {
     SetPixel(hdc, x, y, color);
@@ -225,6 +223,13 @@ void DrawCircle_ModifiedMidpoint(HDC hdc, int xc, int yc, int R, COLORREF color)
     }
 }
 
+#define ID_COLOR_RED    101
+#define ID_COLOR_GREEN  102
+#define ID_COLOR_BLUE   103
+#define ID_COLOR_BLACK  104
+
+COLORREF currentColor = RGB(0, 0, 0);
+
 // ===============================================================
 // GUI Definitions
 #define ID_CLEAR_SCREEN   1
@@ -247,7 +252,6 @@ HBRUSH backgroundBrush = (HBRUSH) GetStockObject(WHITE_BRUSH);
 HMENU CreateMainMenu() {
     HMENU hMenu = CreateMenu();
     HMENU hSubMenu = CreatePopupMenu();
-    HMENU hCircleMenu = CreatePopupMenu();
 
     AppendMenu(hSubMenu, MF_STRING, ID_SET_WHITE_BG, _T("Change background to white"));
     AppendMenu(hSubMenu, MF_STRING, ID_CLEAR_SCREEN, _T("Clear screen"));
@@ -255,14 +259,18 @@ HMENU CreateMainMenu() {
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_CURSOR, _T("Draw Custom Cursor"));
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_SPLINE, _T("Draw Cardinal Spline"));
     AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER, _T("Fill Circle Quarter with Circles"));
-    AppendMenu(hCircleMenu, MF_STRING, ID_ALGO_DIRECT, _T("Direct"));
-    AppendMenu(hCircleMenu, MF_STRING, ID_ALGO_POLAR, _T("Polar"));
-    AppendMenu(hCircleMenu, MF_STRING, ID_ALGO_ITER_POLAR, _T("Iterative Polar"));
-    AppendMenu(hCircleMenu, MF_STRING, ID_ALGO_MIDPOINT, _T("Midpoint"));
-    AppendMenu(hCircleMenu, MF_STRING, ID_ALGO_MOD_MID, _T("Modified Midpoint"));
-    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hCircleMenu, _T("Circle Algorithm"));
+    AppendMenu(hSubMenu, MF_STRING, ID_ALGO_DIRECT, _T("Circle Direct"));
+    AppendMenu(hSubMenu, MF_STRING, ID_ALGO_POLAR, _T("Circle Polar"));
+    AppendMenu(hSubMenu, MF_STRING, ID_ALGO_ITER_POLAR, _T("Circle Iterative Polar"));
+    AppendMenu(hSubMenu, MF_STRING, ID_ALGO_MIDPOINT, _T("Circle Midpoint"));
+    AppendMenu(hSubMenu, MF_STRING, ID_ALGO_MOD_MID, _T("Circle Modified Midpoint"));
+    AppendMenu(hSubMenu, MF_STRING, ID_COLOR_RED, _T("Change to Red"));
+    AppendMenu(hSubMenu, MF_STRING, ID_COLOR_GREEN, _T("Change to Green"));
+    AppendMenu(hSubMenu, MF_STRING, ID_COLOR_BLUE, _T("Change to Blue"));
+    AppendMenu(hSubMenu, MF_STRING, ID_COLOR_BLACK, _T("Change to Black"));
 
     AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hSubMenu, _T("Options"));
+
     return hMenu;
 }
 
@@ -299,6 +307,11 @@ int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszA
     return messages.wParam;
 }
 
+int x;
+int y;
+HDC hdc;
+PAINTSTRUCT ps;
+
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_MOUSEMOVE:
@@ -313,20 +326,9 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 splinePoints.push_back(pt);
                 InvalidateRect(hwnd, NULL, TRUE);
             }
-            int x;
             x = LOWORD(lParam);
-            int y;
             y = HIWORD(lParam);
-            HDC hdc;
-            hdc = GetDC(hwnd);
-            switch (currentCircleAlgorithm) {
-                case CIRCLE_DIRECT:       DrawCircle_Direct(hdc, x, y, 50, currentColor); break;
-                case CIRCLE_POLAR:        DrawCircle_Polar(hdc, x, y, 50, currentColor); break;
-                case CIRCLE_ITER_POLAR:   DrawCircle_IterativePolar(hdc, x, y, 50, currentColor); break;
-                case CIRCLE_MIDPOINT:     DrawCircle_Midpoint(hdc, x, y, 50, currentColor); break;
-                case CIRCLE_MOD_MID:      DrawCircle_ModifiedMidpoint(hdc, x, y, 50, currentColor); break;
-            }
-            ReleaseDC(hwnd, hdc);
+            InvalidateRect(hwnd, NULL, TRUE);
             break;
 
         case WM_PAINT:
@@ -336,8 +338,29 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
             if (showCursor) DrawCustomCursor(hdc, mouseX, mouseY);
             if (drawSpline && splinePoints.size() >= 4)
-                DrawCardinalSpline(hdc, splinePoints.data(), splinePoints.size());
+                DrawCardinalSpline(hdc, splinePoints.data(), splinePoints.size(), currentColor);
             if (fillQuarter) FillQuarterWithCircles(hdc, 250, 250, 100, currentQuarter);
+            if (currentCircleAlgorithm != NUL) {
+                switch (currentCircleAlgorithm) {
+                    case CIRCLE_DIRECT:
+                        DrawCircle_Direct(hdc, x, y, 50, currentColor);
+                        break;
+                    case CIRCLE_POLAR:
+                        DrawCircle_Polar(hdc, x, y, 50, currentColor);
+                        break;
+                    case CIRCLE_ITER_POLAR:
+                        DrawCircle_IterativePolar(hdc, x, y, 50, currentColor);
+                        break;
+                    case CIRCLE_MIDPOINT:
+                        DrawCircle_Midpoint(hdc, x, y, 50, currentColor);
+                        break;
+                    case CIRCLE_MOD_MID:
+                        DrawCircle_ModifiedMidpoint(hdc, x, y, 50, currentColor);
+                        break;
+                    default:
+                        break;
+                }
+            }
 
             EndPaint(hwnd, &p);
         }
@@ -350,6 +373,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                     showCursor = false;
                     drawSpline = false;
                     fillQuarter = false;
+                    currentCircleAlgorithm = NUL;
                     splinePoints.clear();
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
@@ -380,11 +404,32 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                     fillQuarter = true;
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
+
                 case ID_ALGO_DIRECT:      currentCircleAlgorithm = CIRCLE_DIRECT; break;
+
                 case ID_ALGO_POLAR:       currentCircleAlgorithm = CIRCLE_POLAR; break;
+
                 case ID_ALGO_ITER_POLAR:  currentCircleAlgorithm = CIRCLE_ITER_POLAR; break;
+
                 case ID_ALGO_MIDPOINT:    currentCircleAlgorithm = CIRCLE_MIDPOINT; break;
+
                 case ID_ALGO_MOD_MID:     currentCircleAlgorithm = CIRCLE_MOD_MID; break;
+
+                case ID_COLOR_RED:
+                    currentColor = RGB(255, 0, 0);
+                    break;
+
+                case ID_COLOR_GREEN:
+                    currentColor = RGB(0, 255, 0);
+                    break;
+
+                case ID_COLOR_BLUE:
+                    currentColor = RGB(0, 0, 255);
+                    break;
+
+                case ID_COLOR_BLACK:
+                    currentColor = RGB(0, 0, 0);
+                    break;
             }
             break;
 
