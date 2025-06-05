@@ -12,6 +12,7 @@
 #include <fstream>
 #include "draw.h"
 #include <gdiplus.h>
+#include <sphelper.h>
 #pragma comment (lib, "gdiplus.lib")
 using namespace Gdiplus;
 
@@ -102,6 +103,7 @@ void FillQuarterWithCircles(HDC hdc, int cx, int cy, int R, int quarter, COLORRE
     DeleteObject(brush);
 }
 
+
 void SaveShapesToFile(const string& filename) {
     HWND hwnd = GetForegroundWindow();
     RECT rc;
@@ -139,6 +141,90 @@ void SaveShapesToFile(const string& filename) {
     MessageBox(NULL, _T("Current drawing saved as 'drawing.png'"), _T("Saved"), MB_OK);
 }
 
+enum CircleAlgorithm {
+    CIRCLE_DIRECT, CIRCLE_POLAR, CIRCLE_ITER_POLAR, CIRCLE_MIDPOINT, CIRCLE_MOD_MID
+};
+
+CircleAlgorithm currentCircleAlgorithm = CIRCLE_DIRECT;
+COLORREF currentColor = RGB(0, 0, 255);
+
+void DrawPixel(HDC hdc, int x, int y, COLORREF color) {
+    SetPixel(hdc, x, y, color);
+}
+
+void Draw8Points(HDC hdc, int xc, int yc, int x, int y, COLORREF color) {
+    DrawPixel(hdc, xc + x, yc + y, color);
+    DrawPixel(hdc, xc - x, yc + y, color);
+    DrawPixel(hdc, xc + x, yc - y, color);
+    DrawPixel(hdc, xc - x, yc - y, color);
+    DrawPixel(hdc, xc + y, yc + x, color);
+    DrawPixel(hdc, xc - y, yc + x, color);
+    DrawPixel(hdc, xc + y, yc - x, color);
+    DrawPixel(hdc, xc - y, yc - x, color);
+}
+
+void DrawCircle_Direct(HDC hdc, int xc, int yc, int R, COLORREF color) {
+    for (int x = 0; x <= R / sqrt(2); ++x) {
+        int y = round(sqrt(R * R - x * x));
+        Draw8Points(hdc, xc, yc, x, y, color);
+    }
+}
+
+void DrawCircle_Polar(HDC hdc, int xc, int yc, int R, COLORREF color) {
+    double dtheta = 1.0 / R;
+    for (double theta = 0; theta <= M_PI / 4; theta += dtheta) {
+        int x = round(R * cos(theta));
+        int y = round(R * sin(theta));
+        Draw8Points(hdc, xc, yc, x, y, color);
+    }
+}
+
+void DrawCircle_IterativePolar(HDC hdc, int xc, int yc, int R, COLORREF color) {
+    double x = R, y = 0;
+    double dtheta = 1.0 / R;
+    double cos_dtheta = cos(dtheta), sin_dtheta = sin(dtheta);
+    for (int i = 0; i <= R * M_PI / 4; ++i) {
+        Draw8Points(hdc, xc, yc, round(x), round(y), color);
+        double x_new = x * cos_dtheta - y * sin_dtheta;
+        y = x * sin_dtheta + y * cos_dtheta;
+        x = x_new;
+    }
+}
+
+void DrawCircle_Midpoint(HDC hdc, int xc, int yc, int R, COLORREF color) {
+    int x = 0, y = R;
+    int d = 1 - R;
+    while (x < y) {
+        Draw8Points(hdc, xc, yc, x, y, color);
+        if (d < 0) d += 2 * x + 3;
+        else {
+            d += 2 * (x - y) + 5;
+            y--;
+        }
+        x++;
+    }
+}
+
+void DrawCircle_ModifiedMidpoint(HDC hdc, int xc, int yc, int R, COLORREF color) {
+    int x = 0, y = R;
+    int d = 1 - R;
+    int dE = 3, dSE = -2 * R + 5;
+    while (x <= y) {
+        Draw8Points(hdc, xc, yc, x, y, color);
+        if (d < 0) {
+            d += dE;
+            dE += 2;
+            dSE += 2;
+        } else {
+            d += dSE;
+            dE += 2;
+            dSE += 4;
+            y--;
+        }
+        x++;
+    }
+}
+
 // ===============================================================
 // GUI Definitions
 #define ID_CLEAR_SCREEN   1
@@ -147,6 +233,11 @@ void SaveShapesToFile(const string& filename) {
 #define ID_DRAW_CURSOR    4
 #define ID_DRAW_SPLINE    5
 #define ID_FILL_QUARTER   6
+#define ID_ALGO_DIRECT    7
+#define ID_ALGO_POLAR     8
+#define ID_ALGO_ITER_POLAR 9
+#define ID_ALGO_MIDPOINT  10
+#define ID_ALGO_MOD_MID   11
 
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 TCHAR szClassName[] = _T("2D Drawing App");
@@ -156,6 +247,7 @@ HBRUSH backgroundBrush = (HBRUSH) GetStockObject(WHITE_BRUSH);
 HMENU CreateMainMenu() {
     HMENU hMenu = CreateMenu();
     HMENU hSubMenu = CreatePopupMenu();
+    HMENU hCircleMenu = CreatePopupMenu();
 
     AppendMenu(hSubMenu, MF_STRING, ID_SET_WHITE_BG, _T("Change background to white"));
     AppendMenu(hSubMenu, MF_STRING, ID_CLEAR_SCREEN, _T("Clear screen"));
@@ -163,6 +255,12 @@ HMENU CreateMainMenu() {
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_CURSOR, _T("Draw Custom Cursor"));
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_SPLINE, _T("Draw Cardinal Spline"));
     AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER, _T("Fill Circle Quarter with Circles"));
+    AppendMenu(hCircleMenu, MF_STRING, ID_ALGO_DIRECT, _T("Direct"));
+    AppendMenu(hCircleMenu, MF_STRING, ID_ALGO_POLAR, _T("Polar"));
+    AppendMenu(hCircleMenu, MF_STRING, ID_ALGO_ITER_POLAR, _T("Iterative Polar"));
+    AppendMenu(hCircleMenu, MF_STRING, ID_ALGO_MIDPOINT, _T("Midpoint"));
+    AppendMenu(hCircleMenu, MF_STRING, ID_ALGO_MOD_MID, _T("Modified Midpoint"));
+    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hCircleMenu, _T("Circle Algorithm"));
 
     AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hSubMenu, _T("Options"));
     return hMenu;
@@ -215,6 +313,20 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 splinePoints.push_back(pt);
                 InvalidateRect(hwnd, NULL, TRUE);
             }
+            int x;
+            x = LOWORD(lParam);
+            int y;
+            y = HIWORD(lParam);
+            HDC hdc;
+            hdc = GetDC(hwnd);
+            switch (currentCircleAlgorithm) {
+                case CIRCLE_DIRECT:       DrawCircle_Direct(hdc, x, y, 50, currentColor); break;
+                case CIRCLE_POLAR:        DrawCircle_Polar(hdc, x, y, 50, currentColor); break;
+                case CIRCLE_ITER_POLAR:   DrawCircle_IterativePolar(hdc, x, y, 50, currentColor); break;
+                case CIRCLE_MIDPOINT:     DrawCircle_Midpoint(hdc, x, y, 50, currentColor); break;
+                case CIRCLE_MOD_MID:      DrawCircle_ModifiedMidpoint(hdc, x, y, 50, currentColor); break;
+            }
+            ReleaseDC(hwnd, hdc);
             break;
 
         case WM_PAINT:
@@ -268,6 +380,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                     fillQuarter = true;
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
+                case ID_ALGO_DIRECT:      currentCircleAlgorithm = CIRCLE_DIRECT; break;
+                case ID_ALGO_POLAR:       currentCircleAlgorithm = CIRCLE_POLAR; break;
+                case ID_ALGO_ITER_POLAR:  currentCircleAlgorithm = CIRCLE_ITER_POLAR; break;
+                case ID_ALGO_MIDPOINT:    currentCircleAlgorithm = CIRCLE_MIDPOINT; break;
+                case ID_ALGO_MOD_MID:     currentCircleAlgorithm = CIRCLE_MOD_MID; break;
             }
             break;
 
