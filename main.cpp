@@ -29,6 +29,7 @@ bool fillQuarter = false;
 int currentQuarter = 1;
 
 int mouseX = 0, mouseY = 0;
+static vector<POINT> splinePoints;
 
 // ===============================================================
 // Function Definitions
@@ -151,13 +152,19 @@ int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszA
 }
 
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    static POINT pts[] = {{100, 100}, {150, 80}, {200, 120}, {250, 90}, {300, 150}};
-
     switch (message) {
         case WM_MOUSEMOVE:
             mouseX = LOWORD(lParam);
             mouseY = HIWORD(lParam);
             InvalidateRect(hwnd, NULL, TRUE);
+            break;
+
+        case WM_LBUTTONDOWN:
+            if (drawSpline) {
+                POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+                splinePoints.push_back(pt);
+                InvalidateRect(hwnd, NULL, TRUE);
+            }
             break;
 
         case WM_PAINT:
@@ -166,7 +173,8 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             HDC hdc = BeginPaint(hwnd, &p);
 
             if (showCursor) DrawCustomCursor(hdc, mouseX, mouseY);
-            if (drawSpline) DrawCardinalSpline(hdc, pts, 5);
+            if (drawSpline && splinePoints.size() >= 4)
+                DrawCardinalSpline(hdc, splinePoints.data(), splinePoints.size());
             if (fillQuarter) FillQuarterWithCircles(hdc, 250, 250, 100, currentQuarter);
 
             EndPaint(hwnd, &p);
@@ -180,6 +188,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                     showCursor = false;
                     drawSpline = false;
                     fillQuarter = false;
+                    splinePoints.clear();
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
 
@@ -200,6 +209,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
                 case ID_DRAW_SPLINE:
                     drawSpline = !drawSpline;
+                    splinePoints.clear();
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
 
