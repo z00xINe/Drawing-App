@@ -11,6 +11,6 @@
 -- Check for working CXX compiler: C:/MinGW/bin/c++.exe - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Configuring done (7.0s)
+-- Configuring done (3.1s)
 -- Generating done (0.0s)
 -- Build files have been written to: C:/Users/moustafa/Drawing-App/cmake-build-debug
