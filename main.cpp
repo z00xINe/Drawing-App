@@ -3,10 +3,6 @@
 #elif defined(_UNICODE) && !defined(UNICODE)
 #define UNICODE
 #endif
-#define ID_QUARTER_1 201
-#define ID_QUARTER_2 202
-#define ID_QUARTER_3 203
-#define ID_QUARTER_4 204
 
 #include <tchar.h>
 #include <windows.h>
@@ -263,15 +259,6 @@ HMENU CreateMainMenu() {
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_CURSOR, _T("Draw Custom Cursor"));
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_SPLINE, _T("Draw Cardinal Spline"));
     AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER, _T("Fill Circle Quarter with Circles"));
-
-
-    HMENU hQuarterSubMenu = CreatePopupMenu();
-    AppendMenu(hQuarterSubMenu, MF_STRING, ID_QUARTER_1, _T("Quarter 1 (Top-Right)"));
-    AppendMenu(hQuarterSubMenu, MF_STRING, ID_QUARTER_2, _T("Quarter 2 (Top-Left)"));
-    AppendMenu(hQuarterSubMenu, MF_STRING, ID_QUARTER_3, _T("Quarter 3 (Bottom-Left)"));
-    AppendMenu(hQuarterSubMenu, MF_STRING, ID_QUARTER_4, _T("Quarter 4 (Bottom-Right)"));
-    AppendMenu(hSubMenu, MF_POPUP, (UINT_PTR)hQuarterSubMenu, _T("Select Quarter to Fill"));
-
     AppendMenu(hSubMenu, MF_STRING, ID_ALGO_DIRECT, _T("Circle Direct"));
     AppendMenu(hSubMenu, MF_STRING, ID_ALGO_POLAR, _T("Circle Polar"));
     AppendMenu(hSubMenu, MF_STRING, ID_ALGO_ITER_POLAR, _T("Circle Iterative Polar"));
@@ -286,7 +273,6 @@ HMENU CreateMainMenu() {
 
     return hMenu;
 }
-
 
 int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszArgument, int nCmdShow) {
     HWND hwnd;
@@ -328,7 +314,6 @@ PAINTSTRUCT ps;
 
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
-
         case WM_MOUSEMOVE:
             mouseX = LOWORD(lParam);
             mouseY = HIWORD(lParam);
@@ -352,41 +337,25 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             HDC hdc = BeginPaint(hwnd, &p);
 
             if (showCursor) DrawCustomCursor(hdc, mouseX, mouseY);
-
             if (drawSpline && splinePoints.size() >= 4)
                 DrawCardinalSpline(hdc, splinePoints.data(), splinePoints.size(), currentColor);
-
-            if (fillQuarter) {
-                HPEN pen = CreatePen(PS_SOLID, 2, currentColor);
-                HBRUSH brush = (HBRUSH)GetStockObject(NULL_BRUSH);
-                SelectObject(hdc, pen);
-                SelectObject(hdc, brush);
-                Ellipse(hdc, 250 - 100, 250 - 100, 250 + 100, 250 + 100);
-                DeleteObject(pen);
-
-                FillQuarterWithCircles(hdc, 250, 250, 100, currentQuarter, currentColor);
-            }
-
+            if (fillQuarter) FillQuarterWithCircles(hdc, 250, 250, 100, currentQuarter);
             if (currentCircleAlgorithm != NUL) {
-                int cx = 250;
-                int cy = 250;
-                int R = 100;
-
                 switch (currentCircleAlgorithm) {
                     case CIRCLE_DIRECT:
-                        DrawCircle_Direct(hdc, cx, cy, R, currentColor);
+                        DrawCircle_Direct(hdc, x, y, 50, currentColor);
                         break;
                     case CIRCLE_POLAR:
-                        DrawCircle_Polar(hdc, cx, cy, R, currentColor);
+                        DrawCircle_Polar(hdc, x, y, 50, currentColor);
                         break;
                     case CIRCLE_ITER_POLAR:
-                        DrawCircle_IterativePolar(hdc, cx, cy, R, currentColor);
+                        DrawCircle_IterativePolar(hdc, x, y, 50, currentColor);
                         break;
                     case CIRCLE_MIDPOINT:
-                        DrawCircle_Midpoint(hdc, cx, cy, R, currentColor);
+                        DrawCircle_Midpoint(hdc, x, y, 50, currentColor);
                         break;
                     case CIRCLE_MOD_MID:
-                        DrawCircle_ModifiedMidpoint(hdc, cx, cy, R, currentColor);
+                        DrawCircle_ModifiedMidpoint(hdc, x, y, 50, currentColor);
                         break;
                     default:
                         break;
@@ -399,6 +368,16 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
+                case ID_CLEAR_SCREEN:
+                    shapes.clear();
+                    showCursor = false;
+                    drawSpline = false;
+                    fillQuarter = false;
+                    currentCircleAlgorithm = NUL;
+                    splinePoints.clear();
+                    InvalidateRect(hwnd, NULL, TRUE);
+                    break;
+
                 case ID_SET_WHITE_BG:
                     backgroundBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
                     SetClassLongPtr(hwnd, GCLP_HBRBACKGROUND, (LONG_PTR)backgroundBrush);
@@ -421,95 +400,35 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                     break;
 
                 case ID_FILL_QUARTER:
-                {
-                    int res = MessageBox(hwnd,
-                                         _T("Choose which quarter to fill:\nYes = Quarter 1 (Top-Right)\nNo = Quarter 2 (Top-Left)\nCancel = Quarter 3 (Bottom-Left)\nRetry = Quarter 4 (Bottom-Right)"),
-                                         _T("Choose quarter"),
-                                         MB_YESNOCANCEL | MB_RETRYCANCEL);
-
-                    switch(res) {
-                        case IDYES: currentQuarter = 1; break;
-                        case IDNO: currentQuarter = 2; break;
-                        case IDCANCEL: currentQuarter = 3; break;
-                        case IDRETRY: currentQuarter = 4; break;
-                        default: currentQuarter = 1; break;
-                    }
-
-                    fillQuarter = true;
-                    InvalidateRect(hwnd, NULL, TRUE);
-                }
-                    break;
-
-                case ID_QUARTER_1:
-                    currentQuarter = 1;
+                    currentQuarter = (currentQuarter % 4) + 1;
                     fillQuarter = true;
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
 
-                case ID_QUARTER_2:
-                    currentQuarter = 2;
-                    fillQuarter = true;
-                    InvalidateRect(hwnd, NULL, TRUE);
-                    break;
+                case ID_ALGO_DIRECT:      currentCircleAlgorithm = CIRCLE_DIRECT; break;
 
-                case ID_QUARTER_3:
-                    currentQuarter = 3;
-                    fillQuarter = true;
-                    InvalidateRect(hwnd, NULL, TRUE);
-                    break;
+                case ID_ALGO_POLAR:       currentCircleAlgorithm = CIRCLE_POLAR; break;
 
-                case ID_QUARTER_4:
-                    currentQuarter = 4;
-                    fillQuarter = true;
-                    InvalidateRect(hwnd, NULL, TRUE);
-                    break;
+                case ID_ALGO_ITER_POLAR:  currentCircleAlgorithm = CIRCLE_ITER_POLAR; break;
 
-                case ID_ALGO_DIRECT:
-                    currentCircleAlgorithm = CIRCLE_DIRECT;
-                    InvalidateRect(hwnd, NULL, TRUE);
-                    break;
+                case ID_ALGO_MIDPOINT:    currentCircleAlgorithm = CIRCLE_MIDPOINT; break;
 
-                case ID_ALGO_POLAR:
-                    currentCircleAlgorithm = CIRCLE_POLAR;
-                    InvalidateRect(hwnd, NULL, TRUE);
-                    break;
-
-                case ID_ALGO_ITER_POLAR:
-                    currentCircleAlgorithm = CIRCLE_ITER_POLAR;
-                    InvalidateRect(hwnd, NULL, TRUE);
-                    break;
-
-                case ID_ALGO_MIDPOINT:
-                    currentCircleAlgorithm = CIRCLE_MIDPOINT;
-                    InvalidateRect(hwnd, NULL, TRUE);
-                    break;
-
-                case ID_ALGO_MOD_MID:
-                    currentCircleAlgorithm = CIRCLE_MOD_MID;
-                    InvalidateRect(hwnd, NULL, TRUE);
-                    break;
+                case ID_ALGO_MOD_MID:     currentCircleAlgorithm = CIRCLE_MOD_MID; break;
 
                 case ID_COLOR_RED:
                     currentColor = RGB(255, 0, 0);
-                    InvalidateRect(hwnd, NULL, TRUE);
                     break;
 
                 case ID_COLOR_GREEN:
                     currentColor = RGB(0, 255, 0);
-                    InvalidateRect(hwnd, NULL, TRUE);
                     break;
 
                 case ID_COLOR_BLUE:
                     currentColor = RGB(0, 0, 255);
-                    InvalidateRect(hwnd, NULL, TRUE);
                     break;
 
                 case ID_COLOR_BLACK:
                     currentColor = RGB(0, 0, 0);
-                    InvalidateRect(hwnd, NULL, TRUE);
-                    break;
-
-                default:
                     break;
             }
             break;
