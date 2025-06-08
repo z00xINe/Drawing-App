@@ -3,6 +3,7 @@
 #elif defined(_UNICODE) && !defined(UNICODE)
 #define UNICODE
 #endif
+#define MAX_SPLINE_POINTS 4
 
 #include <tchar.h>
 #include <windows.h>
@@ -317,28 +318,44 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         case WM_MOUSEMOVE:
             mouseX = LOWORD(lParam);
             mouseY = HIWORD(lParam);
+
+            x = mouseX;
+            y = mouseY;
+
             InvalidateRect(hwnd, NULL, TRUE);
             break;
 
+
         case WM_LBUTTONDOWN:
-            if (drawSpline) {
-                POINT pt = { LOWORD(lParam), HIWORD(lParam) };
-                splinePoints.push_back(pt);
+            if (drawSpline && splinePoints.size() < MAX_SPLINE_POINTS) {
+                int x = LOWORD(lParam);
+                int y = HIWORD(lParam);
+                splinePoints.push_back({ x, y });
+
+                if (splinePoints.size() == MAX_SPLINE_POINTS) {
+
+                    drawSpline = false;
+                }
+
                 InvalidateRect(hwnd, NULL, TRUE);
             }
-            x = LOWORD(lParam);
-            y = HIWORD(lParam);
-            InvalidateRect(hwnd, NULL, TRUE);
             break;
+
 
         case WM_PAINT:
         {
             PAINTSTRUCT p;
             HDC hdc = BeginPaint(hwnd, &p);
 
-            if (showCursor) DrawCustomCursor(hdc, mouseX, mouseY);
-            if (drawSpline && splinePoints.size() >= 4)
+            if (drawSpline && splinePoints.size() == MAX_SPLINE_POINTS) {
                 DrawCardinalSpline(hdc, splinePoints.data(), splinePoints.size(), currentColor);
+            }
+
+
+            if (showCursor) DrawCustomCursor(hdc, mouseX, mouseY);
+            if (splinePoints.size() == MAX_SPLINE_POINTS) {
+                DrawCardinalSpline(hdc, splinePoints.data(), splinePoints.size(), currentColor);
+            }
             if (fillQuarter) FillQuarterWithCircles(hdc, 250, 250, 100, currentQuarter);
             if (currentCircleAlgorithm != NUL) {
                 switch (currentCircleAlgorithm) {
@@ -394,10 +411,11 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                     break;
 
                 case ID_DRAW_SPLINE:
-                    drawSpline = !drawSpline;
+                    drawSpline = true;
                     splinePoints.clear();
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
+
 
                 case ID_FILL_QUARTER:
                     currentQuarter = (currentQuarter % 4) + 1;
