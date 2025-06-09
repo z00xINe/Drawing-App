@@ -4,6 +4,11 @@
 #define UNICODE
 #endif
 #define MAX_SPLINE_POINTS 4
+#define ID_FILL_QUARTER_1 201
+#define ID_FILL_QUARTER_2 202
+#define ID_FILL_QUARTER_3 203
+#define ID_FILL_QUARTER_4 204
+
 
 #include <tchar.h>
 #include <windows.h>
@@ -259,7 +264,10 @@ HMENU CreateMainMenu() {
     AppendMenu(hSubMenu, MF_STRING, ID_SAVE_SHAPES, _T("Save shapes to file"));
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_CURSOR, _T("Draw Custom Cursor"));
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_SPLINE, _T("Draw Cardinal Spline"));
-    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER, _T("Fill Circle Quarter with Circles"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_1, _T("Fill Quarter 1"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_2, _T("Fill Quarter 2"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_3, _T("Fill Quarter 3"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_4, _T("Fill Quarter 4"));
     AppendMenu(hSubMenu, MF_STRING, ID_ALGO_DIRECT, _T("Circle Direct"));
     AppendMenu(hSubMenu, MF_STRING, ID_ALGO_POLAR, _T("Circle Polar"));
     AppendMenu(hSubMenu, MF_STRING, ID_ALGO_ITER_POLAR, _T("Circle Iterative Polar"));
@@ -319,27 +327,33 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             mouseX = LOWORD(lParam);
             mouseY = HIWORD(lParam);
 
-            x = mouseX;
-            y = mouseY;
+           // x = mouseX;
+            //y = mouseY;
 
             InvalidateRect(hwnd, NULL, TRUE);
             break;
 
 
         case WM_LBUTTONDOWN:
+            x = LOWORD(lParam);
+            y = HIWORD(lParam);
+
             if (drawSpline && splinePoints.size() < MAX_SPLINE_POINTS) {
-                int x = LOWORD(lParam);
-                int y = HIWORD(lParam);
-                splinePoints.push_back({ x, y });
-
-                if (splinePoints.size() == MAX_SPLINE_POINTS) {
-
-                    drawSpline = false;
-                }
-
-                InvalidateRect(hwnd, NULL, TRUE);
+                POINT pt = { x, y };
+                splinePoints.push_back(pt);
+                if (splinePoints.size() == MAX_SPLINE_POINTS) drawSpline = false;
             }
+            else if (currentCircleAlgorithm != NUL) {
+
+                shapes.clear();
+
+                shapes.push_back({ "Circle", x - 50, y - 50, x + 50, y + 50, currentColor });
+            }
+
+            InvalidateRect(hwnd, NULL, TRUE);
             break;
+
+
 
 
         case WM_PAINT:
@@ -347,41 +361,45 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             PAINTSTRUCT p;
             HDC hdc = BeginPaint(hwnd, &p);
 
-            if (drawSpline && splinePoints.size() == MAX_SPLINE_POINTS) {
-                DrawCardinalSpline(hdc, splinePoints.data(), splinePoints.size(), currentColor);
-            }
+            if (showCursor)
+                DrawCustomCursor(hdc, mouseX, mouseY);
 
-
-            if (showCursor) DrawCustomCursor(hdc, mouseX, mouseY);
             if (splinePoints.size() == MAX_SPLINE_POINTS) {
                 DrawCardinalSpline(hdc, splinePoints.data(), splinePoints.size(), currentColor);
             }
-            if (fillQuarter) FillQuarterWithCircles(hdc, 250, 250, 100, currentQuarter);
-            if (currentCircleAlgorithm != NUL) {
-                switch (currentCircleAlgorithm) {
-                    case CIRCLE_DIRECT:
-                        DrawCircle_Direct(hdc, x, y, 50, currentColor);
-                        break;
-                    case CIRCLE_POLAR:
-                        DrawCircle_Polar(hdc, x, y, 50, currentColor);
-                        break;
-                    case CIRCLE_ITER_POLAR:
-                        DrawCircle_IterativePolar(hdc, x, y, 50, currentColor);
-                        break;
-                    case CIRCLE_MIDPOINT:
-                        DrawCircle_Midpoint(hdc, x, y, 50, currentColor);
-                        break;
-                    case CIRCLE_MOD_MID:
-                        DrawCircle_ModifiedMidpoint(hdc, x, y, 50, currentColor);
-                        break;
-                    default:
-                        break;
+
+
+            for (const auto& shape : shapes) {
+                if (shape.type == "Circle") {
+                    int cx = (shape.x1 + shape.x2) / 2;
+                    int cy = (shape.y1 + shape.y2) / 2;
+                    int R = (shape.x2 - shape.x1) / 2;
+
+                    switch (currentCircleAlgorithm) {
+                        case CIRCLE_DIRECT:
+                            DrawCircle_Direct(hdc, cx, cy, R, shape.color); break;
+                        case CIRCLE_POLAR:
+                            DrawCircle_Polar(hdc, cx, cy, R, shape.color); break;
+                        case CIRCLE_ITER_POLAR:
+                            DrawCircle_IterativePolar(hdc, cx, cy, R, shape.color); break;
+                        case CIRCLE_MIDPOINT:
+                            DrawCircle_Midpoint(hdc, cx, cy, R, shape.color); break;
+                        case CIRCLE_MOD_MID:
+                            DrawCircle_ModifiedMidpoint(hdc, cx, cy, R, shape.color); break;
+                        default: break;
+                    }
+
+                    if (fillQuarter && &shape == &shapes.back()) {
+                        FillQuarterWithCircles(hdc, cx, cy, R, currentQuarter);
+                    }
+
                 }
             }
 
             EndPaint(hwnd, &p);
         }
             break;
+
 
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
@@ -417,11 +435,15 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                     break;
 
 
-                case ID_FILL_QUARTER:
-                    currentQuarter = (currentQuarter % 4) + 1;
+                case ID_FILL_QUARTER_1:
+                case ID_FILL_QUARTER_2:
+                case ID_FILL_QUARTER_3:
+                case ID_FILL_QUARTER_4:
                     fillQuarter = true;
+                    currentQuarter = LOWORD(wParam) - ID_FILL_QUARTER_1 + 1;
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
+
 
                 case ID_ALGO_DIRECT:      currentCircleAlgorithm = CIRCLE_DIRECT; break;
 
