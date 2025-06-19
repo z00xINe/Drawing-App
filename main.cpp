@@ -17,6 +17,8 @@
 #include <string>
 #include <fstream>
 #include "draw.h"
+#include "hermite.h"
+#include "ellipse.h"
 #include <gdiplus.h>
 #pragma comment (lib, "gdiplus.lib")
 using namespace Gdiplus;
@@ -53,6 +55,10 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
     return -1;
 }
 
+bool drawEllipseDirect = false;
+bool drawEllipsePolar = false;
+bool drawEllipseMidpoint = false;
+bool fillHermite = false;
 
 vector<Shape> shapes;
 bool showCursor = false;
@@ -144,6 +150,28 @@ void SaveShapesToFile(const string& filename) {
     ReleaseDC(hwnd, hdcWindow);
 
     MessageBox(NULL, _T("Current drawing saved as 'drawing.png'"), _T("Saved"), MB_OK);
+}
+
+void LoadDataFromFile() {
+    ifstream file("myshapes.txt");
+    if (!file.is_open()) {
+        MessageBox(NULL, _T("Failed to open file."), _T("Load Error"), MB_OK);
+        return;
+    }
+
+    shapes.clear(); //clear previous shapes before loading
+
+    string type;
+    int x, y, a, b;
+//    COLORREF color;
+
+    while (file >> type >> x >> y >> a >> b ) {
+        shapes.push_back({type, x, y, a, b});
+    }
+
+    file.close();
+    MessageBox(NULL, _T("Shapes loaded from file"), _T("Load"), MB_OK);
+
 }
 
 enum CircleAlgorithm {
@@ -249,6 +277,11 @@ COLORREF currentColor = RGB(0, 0, 0);
 #define ID_ALGO_ITER_POLAR 9
 #define ID_ALGO_MIDPOINT  10
 #define ID_ALGO_MOD_MID   11
+#define ID_FILL_HERMITE 20
+#define ID_DRAW_ELLIPSE_DIRECT    21
+#define ID_DRAW_ELLIPSE_POLAR     22
+#define ID_DRAW_ELLIPSE_MIDPOINT  23
+#define ID_LOAD_SHAPES 24
 
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 TCHAR szClassName[] = _T("2D Drawing App");
@@ -262,6 +295,7 @@ HMENU CreateMainMenu() {
     AppendMenu(hSubMenu, MF_STRING, ID_SET_WHITE_BG, _T("Change background to white"));
     AppendMenu(hSubMenu, MF_STRING, ID_CLEAR_SCREEN, _T("Clear screen"));
     AppendMenu(hSubMenu, MF_STRING, ID_SAVE_SHAPES, _T("Save shapes to file"));
+    AppendMenu(hSubMenu, MF_STRING, ID_LOAD_SHAPES, _T("Load shapes from file"));
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_CURSOR, _T("Draw Custom Cursor"));
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_SPLINE, _T("Draw Cardinal Spline"));
     AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_1, _T("Fill Quarter 1"));
@@ -277,6 +311,10 @@ HMENU CreateMainMenu() {
     AppendMenu(hSubMenu, MF_STRING, ID_COLOR_GREEN, _T("Change to Green"));
     AppendMenu(hSubMenu, MF_STRING, ID_COLOR_BLUE, _T("Change to Blue"));
     AppendMenu(hSubMenu, MF_STRING, ID_COLOR_BLACK, _T("Change to Black"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_HERMITE, _T("Fill Square with Vertical Hermite Curves"));
+    AppendMenu(hSubMenu, MF_STRING, ID_DRAW_ELLIPSE_DIRECT, _T("Draw Ellipse (Direct)"));
+    AppendMenu(hSubMenu, MF_STRING, ID_DRAW_ELLIPSE_POLAR, _T("Draw Ellipse (Polar)"));
+    AppendMenu(hSubMenu, MF_STRING, ID_DRAW_ELLIPSE_MIDPOINT, _T("Draw Ellipse (Midpoint)"));
 
     AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hSubMenu, _T("Options"));
 
@@ -327,10 +365,10 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             mouseX = LOWORD(lParam);
             mouseY = HIWORD(lParam);
 
-           // x = mouseX;
+            // x = mouseX;
             //y = mouseY;
 
-            InvalidateRect(hwnd, NULL, TRUE);
+            InvalidateRect(hwnd, NULL, FALSE);
             break;
 
 
@@ -363,6 +401,20 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
             if (showCursor)
                 DrawCustomCursor(hdc, mouseX, mouseY);
+
+            if (drawEllipseDirect) DrawEllipse_Direct(hdc, 300, 200, 100, 50);
+            if (drawEllipsePolar) DrawEllipse_Polar(hdc, 300, 200, 100, 50);
+            if (drawEllipseMidpoint) DrawEllipse_Midpoint(hdc, 300, 200, 100, 50);
+            if (fillHermite) FillSquareWithHermiteCurvesVertical(hdc, 100, 100, 100);
+
+            // draw loaded shapes
+            for (const auto& shape : shapes) {
+                if (shape.type == "Ellipse")
+                    DrawEllipse_Direct(hdc, shape.x1, shape.y1, shape.x2, shape.y2);
+//                else if (shape.type == "")
+//                    ;
+            }
+
 
             if (splinePoints.size() == MAX_SPLINE_POINTS) {
                 DrawCardinalSpline(hdc, splinePoints.data(), splinePoints.size(), currentColor);
@@ -408,6 +460,8 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                     showCursor = false;
                     drawSpline = false;
                     fillQuarter = false;
+                    fillHermite = false;
+                    drawEllipseDirect = drawEllipsePolar = drawEllipseMidpoint = false;
                     currentCircleAlgorithm = NUL;
                     splinePoints.clear();
                     InvalidateRect(hwnd, NULL, TRUE);
@@ -421,6 +475,35 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
                 case ID_SAVE_SHAPES:
                     SaveShapesToFile("shapes.txt");
+                    break;
+
+                case ID_LOAD_SHAPES:
+                    LoadDataFromFile();
+                    InvalidateRect(hwnd, NULL, TRUE);
+                    break;
+
+                case ID_FILL_HERMITE:
+                    fillHermite = true;
+                    InvalidateRect(hwnd, NULL, TRUE);
+                    break;
+
+
+                case ID_DRAW_ELLIPSE_DIRECT:
+                    drawEllipseDirect = true;
+                    drawEllipsePolar = drawEllipseMidpoint = false;
+                    InvalidateRect(hwnd, NULL, TRUE);
+                    break;
+
+                case ID_DRAW_ELLIPSE_POLAR:
+                    drawEllipsePolar = true;
+                    drawEllipseDirect = drawEllipseMidpoint = false;
+                    InvalidateRect(hwnd, NULL, TRUE);
+                    break;
+
+                case ID_DRAW_ELLIPSE_MIDPOINT:
+                    drawEllipseMidpoint = true;
+                    drawEllipseDirect = drawEllipsePolar = false;
+                    InvalidateRect(hwnd, NULL, TRUE);
                     break;
 
                 case ID_DRAW_CURSOR:
