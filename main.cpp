@@ -19,11 +19,10 @@
 #include "draw.h"
 #include "hermite.h"
 #include "ellipse.h"
+#include "circle.h"
 #include <gdiplus.h>
 #pragma comment (lib, "gdiplus.lib")
 using namespace Gdiplus;
-
-
 using namespace std;
 
 // ===============================================================
@@ -162,15 +161,15 @@ void LoadDataFromFile() {
     shapes.clear(); //clear previous shapes before loading
 
     string type;
-    int x, y, a, b;
+    int x1, y1, x2, y2;
 //    COLORREF color;
 
-    while (file >> type >> x >> y >> a >> b ) {
-        shapes.push_back({type, x, y, a, b});
+    while (file >> type >> x1 >> y1 >> x2 >> y2 ) {
+        shapes.push_back({type, x1, y1, x2, y2});
     }
 
     file.close();
-    MessageBox(NULL, _T("Shapes loaded from file"), _T("Load"), MB_OK);
+    MessageBox(NULL, _T("Shapes loaded from file."), _T("Load"), MB_OK);
 
 }
 
@@ -180,82 +179,6 @@ enum CircleAlgorithm {
 
 CircleAlgorithm currentCircleAlgorithm = NUL;
 
-void DrawPixel(HDC hdc, int x, int y, COLORREF color) {
-    SetPixel(hdc, x, y, color);
-}
-
-void Draw8Points(HDC hdc, int xc, int yc, int x, int y, COLORREF color) {
-    DrawPixel(hdc, xc + x, yc + y, color);
-    DrawPixel(hdc, xc - x, yc + y, color);
-    DrawPixel(hdc, xc + x, yc - y, color);
-    DrawPixel(hdc, xc - x, yc - y, color);
-    DrawPixel(hdc, xc + y, yc + x, color);
-    DrawPixel(hdc, xc - y, yc + x, color);
-    DrawPixel(hdc, xc + y, yc - x, color);
-    DrawPixel(hdc, xc - y, yc - x, color);
-}
-
-void DrawCircle_Direct(HDC hdc, int xc, int yc, int R, COLORREF color) {
-    for (int x = 0; x <= R / sqrt(2); ++x) {
-        int y = round(sqrt(R * R - x * x));
-        Draw8Points(hdc, xc, yc, x, y, color);
-    }
-}
-
-void DrawCircle_Polar(HDC hdc, int xc, int yc, int R, COLORREF color) {
-    double dtheta = 1.0 / R;
-    for (double theta = 0; theta <= M_PI / 4; theta += dtheta) {
-        int x = round(R * cos(theta));
-        int y = round(R * sin(theta));
-        Draw8Points(hdc, xc, yc, x, y, color);
-    }
-}
-
-void DrawCircle_IterativePolar(HDC hdc, int xc, int yc, int R, COLORREF color) {
-    double x = R, y = 0;
-    double dtheta = 1.0 / R;
-    double cos_dtheta = cos(dtheta), sin_dtheta = sin(dtheta);
-    for (int i = 0; i <= R * M_PI / 4; ++i) {
-        Draw8Points(hdc, xc, yc, round(x), round(y), color);
-        double x_new = x * cos_dtheta - y * sin_dtheta;
-        y = x * sin_dtheta + y * cos_dtheta;
-        x = x_new;
-    }
-}
-
-void DrawCircle_Midpoint(HDC hdc, int xc, int yc, int R, COLORREF color) {
-    int x = 0, y = R;
-    int d = 1 - R;
-    while (x < y) {
-        Draw8Points(hdc, xc, yc, x, y, color);
-        if (d < 0) d += 2 * x + 3;
-        else {
-            d += 2 * (x - y) + 5;
-            y--;
-        }
-        x++;
-    }
-}
-
-void DrawCircle_ModifiedMidpoint(HDC hdc, int xc, int yc, int R, COLORREF color) {
-    int x = 0, y = R;
-    int d = 1 - R;
-    int dE = 3, dSE = -2 * R + 5;
-    while (x <= y) {
-        Draw8Points(hdc, xc, yc, x, y, color);
-        if (d < 0) {
-            d += dE;
-            dE += 2;
-            dSE += 2;
-        } else {
-            d += dSE;
-            dE += 2;
-            dSE += 4;
-            y--;
-        }
-        x++;
-    }
-}
 
 #define ID_COLOR_RED    101
 #define ID_COLOR_GREEN  102
@@ -411,8 +334,8 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             for (const auto& shape : shapes) {
                 if (shape.type == "Ellipse")
                     DrawEllipse_Direct(hdc, shape.x1, shape.y1, shape.x2, shape.y2);
-//                else if (shape.type == "")
-//                    ;
+                else if (shape.type == "")
+                    ;
             }
 
 
@@ -565,3 +488,4 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     }
     return 0;
 }
+
