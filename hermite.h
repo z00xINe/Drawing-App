@@ -48,4 +48,30 @@ void FillSquareWithHermiteCurvesVertical(HDC hdc, int x, int y, int size, COLORR
     }
 }
 
+void DrawHermiteRecursiveVertical(HDC hdc, int x, int y, int size, int i, int spacing, COLORREF color) {
+    if (i > x + size) return; // Base case: beyond the right edge of the square
+
+    POINT p0 = {i, y};
+    POINT p1 = {i, y + size};
+
+    // Vertical tangents
+    POINT t0 = {0, size / 2};
+    POINT t1 = {0, -size / 2};
+
+    // Optionally use offset for varied tangents:
+    // int offset = i - (x + size / 2);
+    // POINT t0 = {offset / 2, size / 2};
+    // POINT t1 = {-offset / 2, -size / 2};
+
+    DrawHermite(hdc, p0, p1, t0, t1, color);
+
+    // Recurse to the next vertical line
+    DrawHermiteRecursiveVertical(hdc, x, y, size, i + spacing, spacing, color);
+}
+
+void FillSquareWithHermiteCurvesVertical(HDC hdc, int x, int y, int size, COLORREF color = RGB(0, 0, 0)) {
+    int spacing = 10;
+    DrawHermiteRecursiveVertical(hdc, x, y, size, x, spacing, color);
+}
+
 #endif

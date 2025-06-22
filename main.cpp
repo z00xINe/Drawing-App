@@ -4,10 +4,14 @@
 #define UNICODE
 #endif
 #define MAX_SPLINE_POINTS 4
-#define ID_FILL_QUARTER_1 201
-#define ID_FILL_QUARTER_2 202
-#define ID_FILL_QUARTER_3 203
-#define ID_FILL_QUARTER_4 204
+#define ID_FILL_QUARTER_1_Circle 201
+#define ID_FILL_QUARTER_2_Circle 202
+#define ID_FILL_QUARTER_3_Circle 203
+#define ID_FILL_QUARTER_4_Circle 204
+#define ID_FILL_QUARTER_1_Lines 205
+#define ID_FILL_QUARTER_2_Lines 206
+#define ID_FILL_QUARTER_3_Lines 207
+#define ID_FILL_QUARTER_4_Lines 208
 
 
 #include <tchar.h>
@@ -113,6 +117,48 @@ void FillQuarterWithCircles(HDC hdc, int cx, int cy, int R, int quarter, COLORRE
     DeleteObject(brush);
 }
 
+void DrawQuarterCirclesRecursive(HDC hdc, int cx, int cy, int R, int quarter, int x, int y, int smallR, COLORREF color) {
+    if (y > cy + R) return; // Base case: finished all rows
+
+    double dist = sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
+    if (dist + smallR <= R) {
+        bool inQuarter = false;
+        switch (quarter) {
+            case 1: if (x >= cx && y <= cy) inQuarter = true; break;
+            case 2: if (x <= cx && y <= cy) inQuarter = true; break;
+            case 3: if (x <= cx && y >= cy) inQuarter = true; break;
+            case 4: if (x >= cx && y >= cy) inQuarter = true; break;
+        }
+        if (inQuarter) {
+            Ellipse(hdc, x - smallR, y - smallR, x + smallR, y + smallR);
+            shapes.push_back({"Circle", x - smallR, y - smallR, x + smallR, y + smallR, color});
+        }
+    }
+
+    // Move to next column or wrap to next row
+    int nextX = x + smallR * 2;
+    int nextY = y;
+    if (nextX > cx + R) {
+        nextX = cx - R;
+        nextY = y + smallR * 2;
+    }
+
+    DrawQuarterCirclesRecursive(hdc, cx, cy, R, quarter, nextX, nextY, smallR, color);
+}
+
+void FillQuarterWithCirclesRecursive(HDC hdc, int cx, int cy, int R, int quarter, COLORREF color = RGB(0, 0, 255)) {
+    int smallR = 10;
+    HPEN pen = CreatePen(PS_SOLID, 1, color);
+    HBRUSH brush = CreateSolidBrush(color);
+    SelectObject(hdc, pen);
+    SelectObject(hdc, brush);
+
+    // Start recursion from top-left corner of the bounding box
+    DrawQuarterCirclesRecursive(hdc, cx, cy, R, quarter, cx - R, cy - R, smallR, color);
+
+    DeleteObject(pen);
+    DeleteObject(brush);
+}
 
 void SaveShapesToFile(const string& filename) {
     HWND hwnd = GetForegroundWindow();
@@ -173,12 +219,76 @@ void LoadDataFromFile() {
 
 }
 
+enum Quarter { NONE, FIRST, SECOND, THIRD, FOURTH };
+Quarter selectedQuarter = NONE;
+
+void FillQuarterWithLines(HDC hdc, int xc, int yc, int r, Quarter q, COLORREF color = RGB(0, 0, 255)) {
+    for (double angle = 0; angle < 360; angle += 0.5) {
+        double rad = angle * 3.14159265 / 180;
+        int x = (int)(r * cos(rad));
+        int y = (int)(r * sin(rad));
+
+        bool draw = false;
+        switch (q) {
+            case FIRST:  draw = (x >= 0 && y <= 0); break;
+            case SECOND: draw = (x <= 0 && y <= 0); break;
+            case THIRD:  draw = (x <= 0 && y >= 0); break;
+            case FOURTH: draw = (x >= 0 && y >= 0); break;
+            default: break;
+        }
+
+        if (draw) {
+            MoveToEx(hdc, xc, yc, NULL);
+            LineTo(hdc, xc + x, yc + y);
+        }
+    }
+}
+
+void DrawRecursiveLines(HDC hdc, int cx, int cy, int R, int quarter, int x, int y, int lineLength, int spacing, COLORREF color) {
+    if (y > cy + R) return; // Base case: we've gone past the bottom boundary
+
+    double dist = sqrt((x - cx)*(x - cx) + (y - cy)*(y - cy));
+    if (dist + lineLength / 2 <= R) {
+        bool inQuarter = false;
+        switch (quarter) {
+            case 1: if (x >= cx && y <= cy) inQuarter = true; break;
+            case 2: if (x <= cx && y <= cy) inQuarter = true; break;
+            case 3: if (x <= cx && y >= cy) inQuarter = true; break;
+            case 4: if (x >= cx && y >= cy) inQuarter = true; break;
+        }
+        if (inQuarter) {
+            MoveToEx(hdc, x - lineLength / 2, y, nullptr);
+            LineTo(hdc, x + lineLength / 2, y);
+            shapes.push_back({"Line", x - lineLength / 2, y, x + lineLength / 2, y, color});
+        }
+    }
+
+    // Move to next column or next row if needed
+    int nextX = x + spacing;
+    int nextY = y;
+    if (nextX > cx + R) {
+        nextX = cx - R;
+        nextY = y + spacing;
+    }
+
+    DrawRecursiveLines(hdc, cx, cy, R, quarter, nextX, nextY, lineLength, spacing, color);
+}
+
+void FillQuarterWithLinesRecursive(HDC hdc, int cx, int cy, int R, int quarter, COLORREF color = RGB(0, 0, 255)) {
+    int lineLength = 20;
+    int spacing = 20;
+    HPEN pen = CreatePen(PS_SOLID, 1, color);
+    SelectObject(hdc, pen);
+
+    DrawRecursiveLines(hdc, cx, cy, R, quarter, cx - R, cy - R, lineLength, spacing, color);
+
+    DeleteObject(pen);
+}
+
 enum CircleAlgorithm {
     CIRCLE_DIRECT, CIRCLE_POLAR, CIRCLE_ITER_POLAR, CIRCLE_MIDPOINT, CIRCLE_MOD_MID, NUL
 };
-
 CircleAlgorithm currentCircleAlgorithm = NUL;
-
 
 #define ID_COLOR_RED    101
 #define ID_COLOR_GREEN  102
@@ -194,7 +304,6 @@ COLORREF currentColor = RGB(0, 0, 0);
 #define ID_SAVE_SHAPES    3
 #define ID_DRAW_CURSOR    4
 #define ID_DRAW_SPLINE    5
-#define ID_FILL_QUARTER   6
 #define ID_ALGO_DIRECT    7
 #define ID_ALGO_POLAR     8
 #define ID_ALGO_ITER_POLAR 9
@@ -221,10 +330,14 @@ HMENU CreateMainMenu() {
     AppendMenu(hSubMenu, MF_STRING, ID_LOAD_SHAPES, _T("Load shapes from file"));
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_CURSOR, _T("Draw Custom Cursor"));
     AppendMenu(hSubMenu, MF_STRING, ID_DRAW_SPLINE, _T("Draw Cardinal Spline"));
-    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_1, _T("Fill Quarter 1"));
-    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_2, _T("Fill Quarter 2"));
-    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_3, _T("Fill Quarter 3"));
-    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_4, _T("Fill Quarter 4"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_4_Circle, _T("Fill Quarter 1 with circles"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_4_Circle, _T("Fill Quarter 2 with circles"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_4_Circle, _T("Fill Quarter 3 with circles"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_4_Circle, _T("Fill Quarter 4 with circles"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_4_Lines, _T("Fill Quarter 1 with lines"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_4_Lines, _T("Fill Quarter 2 with lines"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_4_Lines, _T("Fill Quarter 3 with lines"));
+    AppendMenu(hSubMenu, MF_STRING, ID_FILL_QUARTER_4_Lines, _T("Fill Quarter 4 with lines"));
     AppendMenu(hSubMenu, MF_STRING, ID_ALGO_DIRECT, _T("Circle Direct"));
     AppendMenu(hSubMenu, MF_STRING, ID_ALGO_POLAR, _T("Circle Polar"));
     AppendMenu(hSubMenu, MF_STRING, ID_ALGO_ITER_POLAR, _T("Circle Iterative Polar"));
@@ -325,15 +438,15 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             if (showCursor)
                 DrawCustomCursor(hdc, mouseX, mouseY);
 
-            if (drawEllipseDirect) DrawEllipse_Direct(hdc, 300, 200, 100, 50);
-            if (drawEllipsePolar) DrawEllipse_Polar(hdc, 300, 200, 100, 50);
-            if (drawEllipseMidpoint) DrawEllipse_Midpoint(hdc, 300, 200, 100, 50);
-            if (fillHermite) FillSquareWithHermiteCurvesVertical(hdc, 100, 100, 100);
+            if (drawEllipseDirect) DrawEllipse_Direct(hdc, 300, 200, 100, 50, currentColor);
+            if (drawEllipsePolar) DrawEllipse_Polar(hdc, 300, 200, 100, 50, currentColor);
+            if (drawEllipseMidpoint) DrawEllipse_Midpoint(hdc, 300, 200, 100, 50, currentColor);
+            if (fillHermite) FillSquareWithHermiteCurvesVertical(hdc, 100, 100, 100, currentColor);
 
             // draw loaded shapes
             for (const auto& shape : shapes) {
                 if (shape.type == "Ellipse")
-                    DrawEllipse_Direct(hdc, shape.x1, shape.y1, shape.x2, shape.y2);
+                    DrawEllipse_Direct(hdc, shape.x1, shape.y1, shape.x2, shape.y2, currentColor);
                 else if (shape.type == "")
                     ;
             }
@@ -352,22 +465,25 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
                     switch (currentCircleAlgorithm) {
                         case CIRCLE_DIRECT:
-                            DrawCircle_Direct(hdc, cx, cy, R, shape.color); break;
+                            DrawCircle_Direct(hdc, cx, cy, R, currentColor); break;
                         case CIRCLE_POLAR:
-                            DrawCircle_Polar(hdc, cx, cy, R, shape.color); break;
+                            DrawCircle_Polar(hdc, cx, cy, R, currentColor); break;
                         case CIRCLE_ITER_POLAR:
-                            DrawCircle_IterativePolar(hdc, cx, cy, R, shape.color); break;
+                            DrawCircle_IterativePolar(hdc, cx, cy, R, currentColor); break;
                         case CIRCLE_MIDPOINT:
-                            DrawCircle_Midpoint(hdc, cx, cy, R, shape.color); break;
+                            DrawCircle_Midpoint(hdc, cx, cy, R, currentColor); break;
                         case CIRCLE_MOD_MID:
-                            DrawCircle_ModifiedMidpoint(hdc, cx, cy, R, shape.color); break;
+                            DrawCircle_ModifiedMidpoint(hdc, cx, cy, R, currentColor); break;
                         default: break;
                     }
 
                     if (fillQuarter && &shape == &shapes.back()) {
-                        FillQuarterWithCircles(hdc, cx, cy, R, currentQuarter);
+                        FillQuarterWithCircles(hdc, cx, cy, R, currentQuarter, currentColor);
                     }
 
+                    if (selectedQuarter != NONE) {
+                        FillQuarterWithLines(hdc, cx, cy, R, selectedQuarter, currentColor);
+                    }
                 }
             }
 
@@ -441,12 +557,29 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                     break;
 
 
-                case ID_FILL_QUARTER_1:
-                case ID_FILL_QUARTER_2:
-                case ID_FILL_QUARTER_3:
-                case ID_FILL_QUARTER_4:
+                case ID_FILL_QUARTER_1_Circle:
+                case ID_FILL_QUARTER_2_Circle:
+                case ID_FILL_QUARTER_3_Circle:
+                case ID_FILL_QUARTER_4_Circle:
                     fillQuarter = true;
-                    currentQuarter = LOWORD(wParam) - ID_FILL_QUARTER_1 + 1;
+                    currentQuarter = LOWORD(wParam) - ID_FILL_QUARTER_1_Circle + 1;
+                    InvalidateRect(hwnd, NULL, TRUE);
+                    break;
+
+                case ID_FILL_QUARTER_1_Lines:
+                    selectedQuarter = FIRST;
+                    InvalidateRect(hwnd, NULL, TRUE);
+                    break;
+                case ID_FILL_QUARTER_2_Lines:
+                    selectedQuarter = SECOND;
+                    InvalidateRect(hwnd, NULL, TRUE);
+                    break;
+                case ID_FILL_QUARTER_3_Lines:
+                    selectedQuarter = THIRD;
+                    InvalidateRect(hwnd, NULL, TRUE);
+                    break;
+                case ID_FILL_QUARTER_4_Lines:
+                    selectedQuarter = FOURTH;
                     InvalidateRect(hwnd, NULL, TRUE);
                     break;
 
