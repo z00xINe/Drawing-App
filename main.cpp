@@ -481,7 +481,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                         FillQuarterWithCircles(hdc, cx, cy, R, currentQuarter, currentColor);
                     }
 
-                    if (selectedQuarter != NONE) {
+                    if (selectedQuarter != NONE && &shape == &shapes.back()) {
                         FillQuarterWithLines(hdc, cx, cy, R, selectedQuarter, currentColor);
                     }
                 }
