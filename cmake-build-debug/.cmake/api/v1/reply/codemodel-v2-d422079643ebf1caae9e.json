@@ -39,7 +39,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "Project::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-Project-Debug-4cff5fcb7eb719807f35.json",
+					"jsonFile" : "target-Project-Debug-6e0f42120f42a04a3a41.json",
 					"name" : "Project",
 					"projectIndex" : 0
 				}
@@ -49,8 +49,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "C:/Users/moustafa/Drawing-App/cmake-build-debug",
-		"source" : "C:/Users/moustafa/Drawing-App"
+		"build" : "C:/Materials/Drawing-App/cmake-build-debug",
+		"source" : "C:/Materials/Drawing-App"
 	},
 	"version" : 
 	{

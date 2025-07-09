@@ -69,7 +69,7 @@ void DrawHermiteRecursiveVertical(HDC hdc, int x, int y, int size, int i, int sp
     DrawHermiteRecursiveVertical(hdc, x, y, size, i + spacing, spacing, color);
 }
 
-void FillSquareWithHermiteCurvesVertical(HDC hdc, int x, int y, int size, COLORREF color = RGB(0, 0, 0)) {
+void FillSquareWithHermiteCurvesVerticalR(HDC hdc, int x, int y, int size, COLORREF color = RGB(0, 0, 0)) {
     int spacing = 10;
     DrawHermiteRecursiveVertical(hdc, x, y, size, x, spacing, color);
 }
