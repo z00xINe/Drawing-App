@@ -84,3 +84,9 @@ cmake --build .
 ## License
 
 This project is open source and available under the MIT License.
+
+## Authors
+
+- Youssef Mohamed (@z00xINe)
+- Mostafa Ibrahim (@darch244)
+- Zeiad Mohamed (@khaledmoabdo)
