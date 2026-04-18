@@ -43,10 +43,10 @@ This project implements various classic computer graphics algorithms for renderi
 ## Building the Project
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/z00xINe/Drawing-App.git
-   cd Drawing-App
-   ```
+```bash
+git clone https://github.com/z00xINe/Drawing-App.git
+cd Drawing-App
+```
 2. Generate build files with CMake:
 ```bash
 mkdir build
